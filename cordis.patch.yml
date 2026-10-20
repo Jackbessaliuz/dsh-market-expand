@@ -1,0 +1,4 @@
+# dsh-market-expand bundle patch: 市场补丁层（一键更新 / 启动自检回退 / 本地插件检测）
+- insert:
+    - id: dsh-market-expand
+      name: 'dsh-market-expand'

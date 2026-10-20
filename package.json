@@ -1,0 +1,52 @@
+{
+  "name": "dsh-market-expand",
+  "version": "0.4.0",
+  "description": "插件市场的补丁层：一键更新全部（退出 DSH 后自动装完并重新打开）+ 更新安全网（启动失败自动回退旧版本）+ 本地插件的更新检测与快照回滚。",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jackbessaliuz/dsh-market-expand.git"
+  },
+  "homepage": "https://github.com/Jackbessaliuz/dsh-market-expand#readme",
+  "bugs": {
+    "url": "https://github.com/Jackbessaliuz/dsh-market-expand/issues"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "plugin-market",
+    "dshmarket",
+    "plugin-update",
+    "auto-update",
+    "rollback",
+    "self-update",
+    "local-plugins",
+    "snapshot"
+  ],
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "client": {
+      "inject": [
+        "react",
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-connection"
+      ],
+      "platform": "web"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "react": "^18.3.1"
+  }
+}
