@@ -37,6 +37,9 @@
     "assets"
   ],
   "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
     "client": {
       "inject": [
         "react",
@@ -44,9 +47,6 @@
         "@deepseek-ai/dsh-client-connection"
       ],
       "platform": "web"
-    },
-    "bundle": {
-      "patch": "./cordis.patch.yml"
     }
   },
   "peerDependencies": {
