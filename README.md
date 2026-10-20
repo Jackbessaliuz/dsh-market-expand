@@ -49,7 +49,20 @@ DSH 的插件市场（`dshmarket`）已经很好用，但有三件事它自己�
 
 ## 进度看得见
 
-DSH 退出后，右下角会弹一个原生小窗（四步轨：**更新 → 自检 → 回退 → 重启**），每个阶段换颜色，不用盯着黑屏猜它有没有在跑。
+DSH 退出后，右下角会弹一个原生小窗，**四步轨：更新 → 自检 → 回退 → 重启**，每个阶段换颜色，不用盯着黑屏猜它有没有在跑。
+
+<p align="center">
+  <img src="assets/progress-updating.png" width="300" alt="更新中：蓝色进度条，四步轨第一步高亮">
+  <img src="assets/progress-rollback.png" width="300" alt="启动失败自动回退：橙色，前三步已变绿">
+</p>
+<p align="center">
+  <img src="assets/progress-done.png" width="300" alt="完成：全绿，3 秒后自动关闭">
+</p>
+
+左：更新中（蓝色，显示 `4/6 · 包名 → 版本`）  
+右上：启动失败后自动回退（橙色，前两步已绿，正在回退肇事插件）  
+右下：完成（全绿，随即自动关闭）
+
 
 ## 和 dshmarket 的关系
 
