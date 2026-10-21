@@ -38,7 +38,7 @@ $form.StartPosition = [System.Windows.Forms.FormStartPosition]::Manual
 $form.TopMost = $true
 $form.ShowInTaskbar = $true
 $form.Width = 470
-$form.Height = 210
+$form.Height = 306
 $form.BackColor = $C_BG
 $form.MaximizeBox = $false
 $form.MinimizeBox = $false
@@ -97,13 +97,45 @@ $lblDetail.Font = New-Object System.Drawing.Font('Microsoft YaHei UI', 9)
 $lblDetail.Text = ''
 $form.Controls.Add($lblDetail)
 
+# --- log tail: last few real log lines (this is the part users can actually see
+# when DSH itself failed; keep it monospace and dark) ---
+$lblLog = New-Object System.Windows.Forms.Label
+$lblLog.AutoSize = $false
+$lblLog.Left = 18
+$lblLog.Top = 112
+$lblLog.Width = 434
+$lblLog.Height = 82
+$lblLog.ForeColor = [System.Drawing.Color]::FromArgb(152, 164, 184)
+$lblLog.BackColor = [System.Drawing.Color]::FromArgb(28, 33, 46)
+$lblLog.Font = New-Object System.Drawing.Font('Consolas', 8)
+$lblLog.TextAlign = [System.Drawing.ContentAlignment]::TopLeft
+$lblLog.Padding = New-Object System.Windows.Forms.Padding(6, 4, 6, 4)
+$lblLog.Text = ''
+$form.Controls.Add($lblLog)
+
+# --- close button (top-right) ---
+$btnClose = New-Object System.Windows.Forms.Button
+$btnClose.Text = [char]0x00D7
+$btnClose.Width = 22
+$btnClose.Height = 22
+$btnClose.Left = $form.Width - 30
+$btnClose.Top = 6
+$btnClose.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+$btnClose.FlatAppearance.BorderSize = 0
+$btnClose.BackColor = $C_BG
+$btnClose.ForeColor = $C_MUTED
+$btnClose.Font = New-Object System.Drawing.Font('Microsoft YaHei UI', 11)
+$btnClose.Cursor = [System.Windows.Forms.Cursors]::Hand
+$btnClose.Add_Click({ $timer.Stop(); $form.Close() })
+$form.Controls.Add($btnClose)
+
 # --- step rail: 4 slots ---
 $stepLabels = @()
 for ($i = 0; $i -lt 4; $i++) {
   $sl = New-Object System.Windows.Forms.Label
   $sl.AutoSize = $false
   $sl.Left = 18 + ($i * 110)
-  $sl.Top = 130
+  $sl.Top = 204
   $sl.Width = 100
   $sl.Height = 24
   $sl.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
@@ -118,7 +150,7 @@ for ($i = 0; $i -lt 4; $i++) {
 $lblHint = New-Object System.Windows.Forms.Label
 $lblHint.AutoSize = $false
 $lblHint.Left = 18
-$lblHint.Top = 164
+$lblHint.Top = 238
 $lblHint.Width = 434
 $lblHint.Height = 24
 $lblHint.ForeColor = [System.Drawing.Color]::FromArgb(110, 120, 140)
@@ -132,6 +164,7 @@ $form.Left = $wa.Right - $form.Width - 24
 $form.Top = $wa.Bottom - $form.Height - 24
 
 $script:phaseColor = @{
+  'waiting-exit' = $C_CYAN
   'preparing'  = $C_BLUE
   'installing' = $C_BLUE
   'verifying'  = $C_CYAN
@@ -139,6 +172,7 @@ $script:phaseColor = @{
   'restarting' = $C_CYAN
   'done'       = $C_GREEN
   'error'      = $C_RED
+  'canceled'   = $C_MUTED
 }
 
 $timer = New-Object System.Windows.Forms.Timer
@@ -200,13 +234,28 @@ $timer.Add_Tick({
 
     if ($s.hint) { $lblHint.Text = [string]$s.hint }
 
+    # log tail: real log lines so the user (and a screenshot) can see what happened
+    $logText = ''
+    if ($s.logLines) {
+      $arr = @($s.logLines)
+      $start = [Math]::Max(0, $arr.Count - 6)
+      $shown = @()
+      for ($i = $start; $i -lt $arr.Count; $i++) { $shown += [string]$arr[$i] }
+      $logText = ($shown -join "`r`n")
+    }
+    $lblLog.Text = $logText
+
     if ($phase -eq 'done') {
-      if ($null -eq $script:closingAt) { $script:closingAt = (Get-Date).AddSeconds(3) }
+      # 60s 而不是 3s：用户很可能不在屏幕前，一闪而过等于没提示
+      if ($null -eq $script:closingAt) { $script:closingAt = (Get-Date).AddSeconds(60) }
+    } elseif ($phase -eq 'canceled') {
+      if ($null -eq $script:closingAt) { $script:closingAt = (Get-Date).AddSeconds(5) }
     } elseif ($phase -eq 'error') {
-      if ($null -eq $script:closingAt) { $script:closingAt = (Get-Date).AddSeconds(10) }
+      # 失败时一直留着，等用户自己关（点右上角 ×）
+      $script:closingAt = $null
     }
 
-    if ($null -eq $script:closingAt -and ((Get-Date) - $script:lastChange).TotalMinutes -gt 10) {
+    if ($phase -ne 'error' -and $null -eq $script:closingAt -and ((Get-Date) - $script:lastChange).TotalMinutes -gt 10) {
       $timer.Stop()
       $form.Close()
       return
