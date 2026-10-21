@@ -38,7 +38,7 @@ $form.StartPosition = [System.Windows.Forms.FormStartPosition]::Manual
 $form.TopMost = $true
 $form.ShowInTaskbar = $true
 $form.Width = 470
-$form.Height = 306
+$form.Height = 316
 $form.BackColor = $C_BG
 $form.MaximizeBox = $false
 $form.MinimizeBox = $false
@@ -47,7 +47,7 @@ $form.MinimizeBox = $false
 $lblTitle = New-Object System.Windows.Forms.Label
 $lblTitle.AutoSize = $false
 $lblTitle.Left = 18
-$lblTitle.Top = 16
+$lblTitle.Top = 40
 $lblTitle.Width = 300
 $lblTitle.Height = 26
 $lblTitle.ForeColor = $C_TEXT
@@ -58,9 +58,9 @@ $form.Controls.Add($lblTitle)
 # --- badge (top right) ---
 $lblBadge = New-Object System.Windows.Forms.Label
 $lblBadge.AutoSize = $false
-$lblBadge.Left = 322
+$lblBadge.Left = 298
 $lblBadge.Top = 18
-$lblBadge.Width = 130
+$lblBadge.Width = 116
 $lblBadge.Height = 22
 $lblBadge.TextAlign = [System.Drawing.ContentAlignment]::MiddleRight
 $lblBadge.ForeColor = $C_MUTED
@@ -71,7 +71,7 @@ $form.Controls.Add($lblBadge)
 # --- progress bar (track + fill) ---
 $track = New-Object System.Windows.Forms.Panel
 $track.Left = 18
-$track.Top = 50
+$track.Top = 76
 $track.Width = 434
 $track.Height = 10
 $track.BackColor = $C_TRACK
@@ -89,9 +89,9 @@ $track.Controls.Add($fill)
 $lblDetail = New-Object System.Windows.Forms.Label
 $lblDetail.AutoSize = $false
 $lblDetail.Left = 18
-$lblDetail.Top = 70
+$lblDetail.Top = 96
 $lblDetail.Width = 434
-$lblDetail.Height = 44
+$lblDetail.Height = 38
 $lblDetail.ForeColor = [System.Drawing.Color]::FromArgb(180, 190, 210)
 $lblDetail.Font = New-Object System.Drawing.Font('Microsoft YaHei UI', 9)
 $lblDetail.Text = ''
@@ -102,9 +102,9 @@ $form.Controls.Add($lblDetail)
 $lblLog = New-Object System.Windows.Forms.Label
 $lblLog.AutoSize = $false
 $lblLog.Left = 18
-$lblLog.Top = 112
+$lblLog.Top = 140
 $lblLog.Width = 434
-$lblLog.Height = 82
+$lblLog.Height = 96
 $lblLog.ForeColor = [System.Drawing.Color]::FromArgb(152, 164, 184)
 $lblLog.BackColor = [System.Drawing.Color]::FromArgb(28, 33, 46)
 $lblLog.Font = New-Object System.Drawing.Font('Consolas', 8)
@@ -114,19 +114,22 @@ $lblLog.Text = ''
 $form.Controls.Add($lblLog)
 
 # --- close button (top-right) ---
-$btnClose = New-Object System.Windows.Forms.Button
+# 用 Label 而不是 Button：WinForms 按钮被聚焦/悬停时会出现白色焦点框（用户反馈难看），
+# Label 没有焦点框也没有边框，颜色和背景一致。
+$btnClose = New-Object System.Windows.Forms.Label
 $btnClose.Text = [char]0x00D7
+$btnClose.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
 $btnClose.Width = 22
 $btnClose.Height = 22
-$btnClose.Left = $form.Width - 30
-$btnClose.Top = 6
-$btnClose.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
-$btnClose.FlatAppearance.BorderSize = 0
+$btnClose.Left = $form.Width - 28
+$btnClose.Top = 4
 $btnClose.BackColor = $C_BG
 $btnClose.ForeColor = $C_MUTED
 $btnClose.Font = New-Object System.Drawing.Font('Microsoft YaHei UI', 11)
 $btnClose.Cursor = [System.Windows.Forms.Cursors]::Hand
 $btnClose.Add_Click({ $timer.Stop(); $form.Close() })
+$btnClose.Add_MouseEnter({ $btnClose.ForeColor = $C_TEXT })
+$btnClose.Add_MouseLeave({ $btnClose.ForeColor = $C_MUTED })
 $form.Controls.Add($btnClose)
 
 # --- step rail: 4 slots ---
@@ -135,7 +138,7 @@ for ($i = 0; $i -lt 4; $i++) {
   $sl = New-Object System.Windows.Forms.Label
   $sl.AutoSize = $false
   $sl.Left = 18 + ($i * 110)
-  $sl.Top = 204
+  $sl.Top = 242
   $sl.Width = 100
   $sl.Height = 24
   $sl.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
@@ -150,7 +153,7 @@ for ($i = 0; $i -lt 4; $i++) {
 $lblHint = New-Object System.Windows.Forms.Label
 $lblHint.AutoSize = $false
 $lblHint.Left = 18
-$lblHint.Top = 238
+$lblHint.Top = 276
 $lblHint.Width = 434
 $lblHint.Height = 24
 $lblHint.ForeColor = [System.Drawing.Color]::FromArgb(110, 120, 140)
@@ -159,9 +162,12 @@ $lblHint.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
 $lblHint.Text = ''
 $form.Controls.Add($lblHint)
 
+# 贴右下角：边距 8px（2026-10-21 用户反馈 24px 太远）。用 WorkingArea 排除任务栏；
+# 某些多屏/缩放环境 PrimaryScreen 可能取不到，退回 Bounds。
 $wa = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
-$form.Left = $wa.Right - $form.Width - 24
-$form.Top = $wa.Bottom - $form.Height - 24
+if ($wa.Width -le 0 -or $wa.Height -le 0) { $wa = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds }
+$form.Left = $wa.Right - $form.Width
+$form.Top = $wa.Bottom - $form.Height
 
 $script:phaseColor = @{
   'waiting-exit' = $C_CYAN
@@ -246,8 +252,9 @@ $timer.Add_Tick({
     $lblLog.Text = $logText
 
     if ($phase -eq 'done') {
-      # 60s 而不是 3s：用户很可能不在屏幕前，一闪而过等于没提示
-      if ($null -eq $script:closingAt) { $script:closingAt = (Get-Date).AddSeconds(60) }
+      # 300s 而不是 3s：用户很可能不在屏幕前，一闪而过等于没提示（2026-10-21 实测：
+      # 60s 也可能刚好错过，改成 5 分钟）
+      if ($null -eq $script:closingAt) { $script:closingAt = (Get-Date).AddSeconds(300) }
     } elseif ($phase -eq 'canceled') {
       if ($null -eq $script:closingAt) { $script:closingAt = (Get-Date).AddSeconds(5) }
     } elseif ($phase -eq 'error') {
@@ -255,6 +262,8 @@ $timer.Add_Tick({
       $script:closingAt = $null
     }
 
+    # 等待用户退出 DSH 的阶段不自动关（他可能很久才关）
+    if ($phase -eq 'waiting-exit') { $script:lastChange = Get-Date }
     if ($phase -ne 'error' -and $null -eq $script:closingAt -and ((Get-Date) - $script:lastChange).TotalMinutes -gt 10) {
       $timer.Stop()
       $form.Close()
@@ -267,5 +276,5 @@ $timer.Add_Tick({
 })
 $timer.Start()
 
-$form.Add_Shown({ $form.Activate() })
+$form.Add_Shown({ $form.Activate(); try { [System.IO.File]::WriteAllText($script:StateFile + '.shown', (Get-Date -Format o)) } catch { } })
 $form.ShowDialog() | Out-Null
