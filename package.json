@@ -1,6 +1,6 @@
 {
   "name": "dsh-market-expand",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "插件市场的补丁层：一键更新全部（退出 DSH 后自动装完并重新打开）+ 更新安全网（启动失败自动回退旧版本）+ 本地插件的更新检测与快照回滚。",
   "license": "MIT",
   "repository": {
