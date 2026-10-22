@@ -224,7 +224,9 @@ $timer.Add_Tick({
         $sl.ForeColor = $C_GREEN
         $sl.Font = New-Object System.Drawing.Font('Microsoft YaHei UI', 9)
       } elseif ($phase -eq 'error') {
-        $sl.ForeColor = if ($i -le $cur) { $C_RED } else { $C_DIM }
+        # 只把「出错那一步」标红，之前完成的步骤保持绿色，后面的灰：
+        # 四格全红会让人以为四步都坏了（2026-10-22 群友录屏里的现场）
+        $sl.ForeColor = if ($i -lt $cur) { $C_GREEN } elseif ($i -eq $cur) { $C_RED } else { $C_DIM }
         $sl.Font = New-Object System.Drawing.Font('Microsoft YaHei UI', 9, $(if ($i -eq $cur) { [System.Drawing.FontStyle]::Bold } else { [System.Drawing.FontStyle]::Regular }))
       } elseif ($i -lt $cur) {
         $sl.ForeColor = $C_GREEN
